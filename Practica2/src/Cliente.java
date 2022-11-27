@@ -145,9 +145,8 @@ public class Cliente {
                     }else{
                         file.add(NoPaq-1,paquete);//Insertion sort
                         if(file.size() == NumTotal){//Se comprueba si se acabó de leer los paquetes
-                            leyendo=false;
-                            sendACK(ds,IA,true);// Se manda un ultimo ACK confirmando la llegada del paquete
-                            i=5;
+                            leyendo = false;
+                            i = 5;
                             break;
                         }
                     }

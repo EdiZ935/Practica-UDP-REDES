@@ -45,7 +45,6 @@ public class Servidor {
 
     public static void recibeInstr(DatagramSocket ds) throws IOException {
         int type,instr;
-        final File Base = new File(ruta);
         System.out.println("Servidor esperando Instrucciones..");
         DatagramPacket p = new DatagramPacket(new byte[65535],65535);
         ds.setSoTimeout(0);// Se espera un tiempo indefinido a que llegue la operación a realizar
@@ -62,6 +61,7 @@ public class Servidor {
             instr=dis.readInt();// lee un siguiente número para saber que operación fue solicitada
             switch (instr){
                 case 0:
+                    final File Base = new File(ruta);
                     System.out.println("LS album");
                     sendDirContent(Base,ds,IA); // Caso 0 se manda el listado de álbumes, es decir se manda un ls de la carpeta
                     break;
@@ -77,6 +77,7 @@ public class Servidor {
                     //Esta instrucción se manda múltiples veces cuando se desea descargar un carrito completo
                     break;
                 default:
+                    System.out.println(instr);
                     System.out.println("Operación desconocida: ERROR");//Se recibe una operación desconocida == error!
                     break;
             }
@@ -87,7 +88,7 @@ public class Servidor {
 
     }
     public static boolean recibeACK(DatagramSocket s) throws IOException{//Esta función recibe ACK es decir
-        // recibe confirmación de llegada y regresa un booleano
+
         boolean respuesta = false;//Se inicializa la respuesta
         System.out.println("Servidor esperando Acuse de Recibido...");
         DatagramPacket p = new DatagramPacket(new byte[65535],65535);
@@ -96,9 +97,8 @@ public class Servidor {
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(p.getData()));
         int type = dis.readInt();//Define el tipo en este caso se espera el tipo acuse: 3
         /*if(type != 3)
-        sout
-            throw new IOException("Se esperaba ACK...");*/
-        System.out.println("Type: "+type);
+            throw new IOException("Se esperaba ACK...");
+        System.out.println("Type: "+type);*/
         int res = dis.readInt(); // Se espera uno o cero: Respuesta de recibido
 
         if(res>0)//Si se lee positivo es verdadero
@@ -157,8 +157,14 @@ public class Servidor {
     public static int mandaVentana(List<byte[]> listaPaquetes, DatagramSocket cl, InetAddress IA, int NumVentana) throws IOException {
         int enviados = 0;
         int i  = TamVentana * NumVentana;
-        while((listaPaquetes.get(i) != null) && (i < ((TamVentana*NumVentana)+TamVentana))){
-            DatagramPacket p = new DatagramPacket(listaPaquetes.get(i), listaPaquetes.get(i).length, IA, clientPort);//Enviado del paquete
+        while((i < ((TamVentana * NumVentana)+TamVentana))){
+            DatagramPacket p;
+            try {
+                p = new DatagramPacket(listaPaquetes.get(i), listaPaquetes.get(i).length, IA, clientPort);//Enviado del paquete
+            }catch (Exception e){
+                System.out.println("Se envió la ventana final, tamaño: " + (i-1));
+                break;
+            }
             cl.send(p);
             i++;
             enviados++;
